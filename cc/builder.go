@@ -131,7 +131,7 @@ var (
 		blueprint.RuleParams{
 			Depfile:     "${out}.d",
 			Deps:        blueprint.DepsGCC,
-			Command:     "CROSS_COMPILE=$crossCompile XZ=$xzCmd CLANG_BIN=${config.ClangBin} $stripPath ${args} -i ${in} -o ${out} -d ${out}.d",
+			Command:     "XZ=$xzCmd CLANG_BIN=${config.ClangBin} $stripPath ${args} -i ${in} -o ${out} -d ${out}.d",
 			CommandDeps: []string{"$stripPath", "$xzCmd"},
 			Pool:        darwinStripPool,
 		},
@@ -159,7 +159,7 @@ var (
 		blueprint.RuleParams{
 			Depfile:     "${out}.d",
 			Deps:        blueprint.DepsGCC,
-			Command:     "CROSS_COMPILE=$crossCompile $tocPath $format -i ${in} -o ${out} -d ${out}.d",
+			Command:     "CLANG_BIN=${config.ClangBin} $tocPath $format -i ${in} -o ${out} -d ${out}.d",
 			CommandDeps: []string{"$tocPath"},
 			Restat:      true,
 		},
@@ -318,6 +318,7 @@ type builderFlags struct {
 	rsFlags       string
 	toolchain     config.Toolchain
 	tidy          bool
+	polly         bool
 	gcovCoverage  bool
 	sAbiDump      bool
 	emitXrefs     bool
@@ -514,7 +515,11 @@ func TransformSourceToObj(ctx android.ModuleContext, subdir string, srcFiles and
 
 		ccDesc := ccCmd
 
+		var extraFlags string
 		ccCmd = "${config.ClangBin}/" + ccCmd
+		if flags.polly {
+			extraFlags = " ${config.PollyFlags}"
+		}
 
 		var implicitOutputs android.WritablePaths
 		if coverage {
@@ -532,7 +537,7 @@ func TransformSourceToObj(ctx android.ModuleContext, subdir string, srcFiles and
 			Implicits:       cFlagsDeps,
 			OrderOnly:       pathDeps,
 			Args: map[string]string{
-				"cFlags": moduleFlags,
+				"cFlags": moduleFlags + extraFlags,
 				"ccCmd":  ccCmd,
 			},
 		})

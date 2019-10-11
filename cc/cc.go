@@ -184,6 +184,7 @@ type Flags struct {
 
 	Toolchain    config.Toolchain
 	Tidy         bool
+	Polly        bool
 	GcovCoverage bool
 	SAbiDump     bool
 	EmitXrefs    bool // If true, generate Ninja rules to generate emitXrefs input files for Kythe
@@ -208,6 +209,9 @@ type Flags struct {
 type BaseProperties struct {
 	// Deprecated. true is the default, false is invalid.
 	Clang *bool `android:"arch_variant"`
+
+	// compile module using polly
+	Polly *bool `android:"arch_variant"`
 
 	// Minimum sdk version supported when compiling against the ndk. Setting this property causes
 	// two variants to be built, one for the platform and one for apps.
@@ -438,6 +442,18 @@ var (
 	vndkExtDepTag         = DependencyTag{Name: "vndk extends", Library: true}
 	runtimeDepTag         = DependencyTag{Name: "runtime lib"}
 	testPerSrcDepTag      = DependencyTag{Name: "test_per_src"}
+	pollyDisabled         = []string{"libaom", "libart-compiler", "libart", "libavcenc", "libavcdec", "libbluetooth", "libblasV8",
+				"libbnnmlowp", "libbnnmlowpV8", "libcodec2_soft_hevcdec", "libcodec2_soft_hevcenc",
+				"libcodec2_soft_av1dec", "libcodec2_soft_vp8dec", "libcodec2_soft_vp9dec", "libcodec2_soft_vp8enc",
+				"libcodec2_soft_vp9enc", "libdng_sdk", "libhevcdec", "libhevcenc", "libF77blas", "libF77blasV8",
+				"libfdlibm", "libFFTEm", "libFraunhoferAAC", "libgav1", "libgsm", "libinputreader", "libjpeg", "libjpeg_static_ndk",
+				"libLLVMAArch64CodeGen", "libLLVMARMCodeGen", "libm", "libmpeg2dec", "libmedia_jni", "libmusicbundle",
+				"libneuralnetworks_common", "libopus", "libpdfiumfxge", "libpdfiumjpeg", "libpdfiumopenjpeg",
+				"libpdfiumfpdftext", "libpdfiumfx_libopenjpeg", "libreverb", "libRS_internal", "libRSCpuRef",
+				"libRSSupport", "libskia", "libsonic", "libspeexresampler", "libstagefright_amrnbenc",
+				"libstagefright_amrwbenc", "libtflite_kernels", "libtflite_kernel_utils", "libv8base", "libv8src",
+				"libvpx", "libwebp-decode", "libwebp-encode", "libwebrtc_apm", "libwebrtc_isac", "libwebrtc_spl",
+				"libyuv", "libunwindstack",}
 )
 
 func IsSharedDepTag(depTag blueprint.DependencyTag) bool {
@@ -1484,6 +1500,7 @@ func (c *Module) GenerateAndroidBuildActions(actx android.ModuleContext) {
 
 	flags := Flags{
 		Toolchain: c.toolchain(ctx),
+		Polly:	   c.polly(ctx),
 		EmitXrefs: ctx.Config().EmitXrefRules(),
 	}
 	if c.compiler != nil {
@@ -2190,6 +2207,24 @@ func checkDoubleLoadableLibraries(ctx android.TopDownMutatorContext) {
 			}
 		}
 	}
+}
+
+func (c *Module) polly(ctx BaseModuleContext) bool {
+	polly := Bool(c.Properties.Polly)
+
+	if ctx.Host() {
+		return false
+	}
+
+	if inList(ctx.baseModuleName(), pollyDisabled) {
+		return false
+	}
+
+	if c.Properties.Polly == nil && config.Polly {
+		return true
+	}
+
+	return polly
 }
 
 // Convert dependencies to paths.  Returns a PathDeps containing paths

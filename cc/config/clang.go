@@ -128,6 +128,8 @@ func init() {
 		// Warnings from clang-10
 		// Nested and array designated initialization is nice to have.
 		"-Wno-c99-designator",
+		"-Wno-error=reorder-init-list",
+		"-Wno-error=implicit-int-float-conversion",
 	}, " "))
 
 	pctx.StaticVariable("ClangExtraCppflags", strings.Join([]string{
@@ -152,6 +154,7 @@ func init() {
 		// fixed.
 		//"-Werror=null-dereference",
 		"-Werror=return-type",
+		"-Wno-error",
 
 		// http://b/72331526 Disable -Wtautological-* until the instances detected by these
 		// new warnings are fixed.
@@ -176,6 +179,12 @@ func init() {
 		"-Wno-enum-enum-conversion",                 // http://b/154138986
 		"-Wno-enum-float-conversion",                // http://b/154255917
 		"-Wno-pessimizing-move",                     // http://b/154270751
+		// Added for r385598
+		"-Wno-deprecated-copy",
+		"-Wno-misleading-indentation",
+		"-Wno-non-c-typedef-for-linkage",
+		"-Wno-range-loop-construct",
+		"-Wno-error=void-pointer-to-int-cast",
 	}, " "))
 
 	// Extra cflags for external third-party projects to disable warnings that
