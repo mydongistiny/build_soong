@@ -442,7 +442,7 @@ var (
 	vndkExtDepTag         = DependencyTag{Name: "vndk extends", Library: true}
 	runtimeDepTag         = DependencyTag{Name: "runtime lib"}
 	testPerSrcDepTag      = DependencyTag{Name: "test_per_src"}
-	pollyDisabled         = []string{"libaom", "libart-compiler", "libart", "libavcenc", "libavcdec", "libbluetooth", "libblasV8",
+	pollyDisabledTarget   = []string{"libaom", "libart-compiler", "libart", "libavcenc", "libavcdec", "libbluetooth", "libblasV8",
 				"libbnnmlowp", "libbnnmlowpV8", "libcodec2_soft_hevcdec", "libcodec2_soft_hevcenc",
 				"libcodec2_soft_av1dec", "libcodec2_soft_vp8dec", "libcodec2_soft_vp9dec", "libcodec2_soft_vp8enc",
 				"libcodec2_soft_vp9enc", "libdng_sdk", "libhevcdec", "libhevcenc", "libF77blas", "libF77blasV8",
@@ -454,6 +454,7 @@ var (
 				"libstagefright_amrwbenc", "libtflite_kernels", "libtflite_kernel_utils", "libv8base", "libv8src",
 				"libvpx", "libwebp-decode", "libwebp-encode", "libwebrtc_apm", "libwebrtc_isac", "libwebrtc_spl",
 				"libyuv", "libunwindstack",}
+	pollyDisabledHost     = []string{"toybox",}
 )
 
 func IsSharedDepTag(depTag blueprint.DependencyTag) bool {
@@ -2212,11 +2213,11 @@ func checkDoubleLoadableLibraries(ctx android.TopDownMutatorContext) {
 func (c *Module) polly(ctx BaseModuleContext) bool {
 	polly := Bool(c.Properties.Polly)
 
-	if ctx.Host() {
+	if inList(ctx.baseModuleName(), pollyDisabledHost) {
 		return false
 	}
 
-	if inList(ctx.baseModuleName(), pollyDisabled) {
+	if inList(ctx.baseModuleName(), pollyDisabledTarget) {
 		return false
 	}
 
